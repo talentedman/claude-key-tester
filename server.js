@@ -340,6 +340,24 @@ app.post('/api/test', async (req, res) => {
   }
 });
 
+app.post('/api/models', async (req, res) => {
+  try {
+    const baseUrl = normalizeBaseUrl(req.body?.baseUrl);
+    const apiKey = String(req.body?.apiKey || '').trim();
+    if (!apiKey) {
+      return res.status(400).json({ success: false, message: 'apiKey 不能为空' });
+    }
+    const result = await listModels(baseUrl, apiKey);
+    return res.status(result.ok ? 200 : result.status).json({
+      success: result.ok,
+      modelIds: result.modelIds,
+      message: result.ok ? '' : extractErrMsg(result.body || result.rawText) || `HTTP ${result.status}`,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err?.message || '服务端异常' });
+  }
+});
+
 app.get('/healthz', (req, res) => {
   res.json({ ok: true });
 });

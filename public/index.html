@@ -92,6 +92,31 @@
     td.duration { color: #94a3b8; white-space: nowrap; }
     .hint { color: #94a3b8; font-size: 12px; margin-top: 8px; }
     .toolbar { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .combo { position: relative; }
+    .combo-panel {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .combo-panel.open { display: block; }
+    .combo-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+      cursor: pointer;
+      color: #e2e8f0;
+    }
+    .combo-item:hover, .combo-item.active { background: #1e293b; }
+    .combo-empty { padding: 10px 12px; font-size: 12px; color: #64748b; }
   </style>
 </head>
 <body>
@@ -109,8 +134,12 @@
         </div>
         <div class="row2">
           <div>
-            <label for="model">Model（可选）</label>
-            <input id="model" placeholder="默认 claude-opus-4-7" value="claude-opus-4-7" />
+            <label for="model">Model（聚焦自动拉取可用列表）</label>
+            <div class="combo">
+              <input id="model" placeholder="默认 claude-opus-4-7" value="claude-opus-4-7" autocomplete="off" />
+              <div id="modelPanel" class="combo-panel"></div>
+            </div>
+            <div id="modelHint" class="hint" style="margin-top:4px"></div>
           </div>
           <div>
             <label for="concurrency">并发数</label>
@@ -158,6 +187,8 @@
       baseUrl: document.getElementById('baseUrl'),
       apiKeys: document.getElementById('apiKeys'),
       model: document.getElementById('model'),
+      modelPanel: document.getElementById('modelPanel'),
+      modelHint: document.getElementById('modelHint'),
       concurrency: document.getElementById('concurrency'),
       enable1m: document.getElementById('enable1m'),
       prompt: document.getElementById('prompt'),
@@ -333,6 +364,119 @@
     els.prompt.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runAll();
     });
+
+    const modelCache = new Map();
+    let modelInflight = null;
+    let modelIds = [];
+    let activeIdx = -1;
+
+    function setModelHint(text, isErr = false) {
+      els.modelHint.textContent = text;
+      els.modelHint.style.color = isErr ? '#fca5a5' : '#94a3b8';
+    }
+
+    function renderModelPanel() {
+      els.modelPanel.innerHTML = '';
+      if (!modelIds.length) {
+        const empty = document.createElement('div');
+        empty.className = 'combo-empty';
+        empty.textContent = '聚焦输入框自动加载';
+        els.modelPanel.appendChild(empty);
+        return;
+      }
+      modelIds.forEach((id, i) => {
+        const item = document.createElement('div');
+        item.className = 'combo-item' + (i === activeIdx ? ' active' : '');
+        item.textContent = id;
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          els.model.value = id;
+          closeModelPanel();
+        });
+        els.modelPanel.appendChild(item);
+      });
+    }
+
+    function openModelPanel() {
+      activeIdx = -1;
+      renderModelPanel();
+      els.modelPanel.classList.add('open');
+    }
+
+    function closeModelPanel() {
+      els.modelPanel.classList.remove('open');
+    }
+
+    async function loadModels({ force = false } = {}) {
+      const baseUrl = els.baseUrl.value.trim();
+      const firstKey = parseKeys(els.apiKeys.value)[0];
+      if (!baseUrl || !firstKey) {
+        setModelHint('请先填 Base URL 和至少一个 API Key', true);
+        return;
+      }
+      const cacheKey = `${baseUrl}::${firstKey}`;
+      if (!force && modelCache.has(cacheKey)) {
+        modelIds = modelCache.get(cacheKey);
+        setModelHint(`已加载 ${modelIds.length} 个模型（缓存）`);
+        renderModelPanel();
+        return;
+      }
+      if (modelInflight) return;
+      setModelHint('拉取可用模型中…');
+      modelInflight = (async () => {
+        try {
+          const res = await fetch('/api/models', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ baseUrl, apiKey: firstKey }),
+          });
+          const data = await res.json();
+          if (data.success && Array.isArray(data.modelIds) && data.modelIds.length) {
+            modelIds = data.modelIds;
+            modelCache.set(cacheKey, modelIds);
+            setModelHint(`已加载 ${modelIds.length} 个模型`);
+            renderModelPanel();
+          } else {
+            setModelHint(`拉取失败：${data.message || '未知错误'}`, true);
+          }
+        } catch (err) {
+          setModelHint(`请求异常：${err?.message || err}`, true);
+        } finally {
+          modelInflight = null;
+        }
+      })();
+    }
+
+    els.model.addEventListener('focus', () => {
+      openModelPanel();
+      loadModels();
+    });
+    els.model.addEventListener('input', () => {
+      activeIdx = -1;
+      renderModelPanel();
+      els.modelPanel.classList.add('open');
+    });
+    els.model.addEventListener('blur', () => setTimeout(closeModelPanel, 120));
+    els.model.addEventListener('keydown', (e) => {
+      const items = els.modelPanel.querySelectorAll('.combo-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIdx = Math.min(items.length - 1, activeIdx + 1);
+        renderModelPanel();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIdx = Math.max(0, activeIdx - 1);
+        renderModelPanel();
+      } else if (e.key === 'Enter' && activeIdx >= 0 && items[activeIdx]) {
+        e.preventDefault();
+        els.model.value = items[activeIdx].textContent;
+        closeModelPanel();
+      } else if (e.key === 'Escape') {
+        closeModelPanel();
+      }
+    });
+    els.baseUrl.addEventListener('change', () => { modelIds = []; setModelHint(''); });
+    els.apiKeys.addEventListener('change', () => { modelIds = []; setModelHint(''); });
   </script>
 </body>
 </html>
