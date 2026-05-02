@@ -1,0 +1,12 @@
+services:
+  claude-key-tester:
+    build: .
+    container_name: claude-key-tester
+    ports:
+      - "18080:8080"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+      - DEFAULT_MODEL=claude-opus-4-7
+      - DEFAULT_ENABLE_1M_CONTEXT=1
+      - CONTEXT_1M_BETA=claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,effort-2025-11-24

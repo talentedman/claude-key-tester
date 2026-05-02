@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Key Tester</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background: #0b1020;
+      color: #e5e7eb;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 36px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    h1 { margin: 0 0 16px; font-size: 22px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    label { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; display: block; }
+    input, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #374151;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    button {
+      margin-top: 6px;
+      border: 0;
+      background: #2563eb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .status {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ok { background: #052e16; border: 1px solid #166534; color: #bbf7d0; }
+    .err { background: #3f0c17; border: 1px solid #9f1239; color: #fecdd3; }
+    pre {
+      margin-top: 12px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      overflow: auto;
+      max-height: 380px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .hint { color: #94a3b8; font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Claude Key 可用性测试</h1>
+      <div class="grid">
+        <div>
+          <label for="baseUrl">Base URL</label>
+          <input id="baseUrl" placeholder="例如: https://anyrouter.top" value="https://anyrouter.top" />
+        </div>
+        <div>
+          <label for="apiKey">API Key</label>
+          <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        </div>
+        <div>
+          <label for="model">Model（可选）</label>
+          <input id="model" placeholder="默认 claude-opus-4-7" value="claude-opus-4-7" />
+        </div>
+        <div>
+          <label for="enable1m">
+            <input id="enable1m" type="checkbox" checked style="width:auto; margin-right:8px; vertical-align:middle;" />
+            默认启用 1m 上下文（自动尝试 model[1m] + anthropic-beta）
+          </label>
+        </div>
+        <div>
+          <label for="prompt">测试文案</label>
+          <textarea id="prompt" placeholder="输入你想测试的文本">请只回复：pong</textarea>
+        </div>
+      </div>
+
+      <button id="runBtn">开始测试</button>
+      <div id="status" class="status" style="display:none"></div>
+      <pre id="output" style="display:none"></pre>
+      <div class="hint">调用方式按 Claude Messages API：POST /v1/messages（默认启用 1m 重试链）</div>
+    </div>
+  </div>
+
+  <script>
+    const els = {
+      baseUrl: document.getElementById('baseUrl'),
+      apiKey: document.getElementById('apiKey'),
+      model: document.getElementById('model'),
+      enable1m: document.getElementById('enable1m'),
+      prompt: document.getElementById('prompt'),
+      runBtn: document.getElementById('runBtn'),
+      status: document.getElementById('status'),
+      output: document.getElementById('output'),
+    };
+
+    function setStatus(ok, text) {
+      els.status.style.display = 'block';
+      els.status.className = `status ${ok ? 'ok' : 'err'}`;
+      els.status.textContent = text;
+    }
+
+    function setOutput(obj) {
+      els.output.style.display = 'block';
+      els.output.textContent = JSON.stringify(obj, null, 2);
+    }
+
+    async function testKey() {
+      const payload = {
+        baseUrl: els.baseUrl.value.trim(),
+        apiKey: els.apiKey.value.trim(),
+        model: els.model.value.trim(),
+        enable1m: !!els.enable1m.checked,
+        prompt: els.prompt.value,
+      };
+
+      if (!payload.baseUrl || !payload.apiKey || !payload.prompt.trim()) {
+        setStatus(false, '请完整填写 baseUrl / apiKey / 测试文案');
+        return;
+      }
+
+      els.runBtn.disabled = true;
+      setStatus(true, '请求中...');
+      els.output.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/test', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        setStatus(!!data.success, data.message || (data.success ? '成功' : '失败'));
+        setOutput(data);
+      } catch (err) {
+        setStatus(false, `请求异常：${err.message || err}`);
+      } finally {
+        els.runBtn.disabled = false;
+      }
+    }
+
+    els.runBtn.addEventListener('click', testKey);
+    els.prompt.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        testKey();
+      }
+    });
+  </script>
+</body>
+</html>

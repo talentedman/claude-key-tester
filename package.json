@@ -1,0 +1,13 @@
+{
+  "name": "claude-key-tester",
+  "version": "1.0.0",
+  "description": "Test Claude API key with base URL and prompt",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
