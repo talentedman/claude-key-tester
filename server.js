@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -8,6 +9,9 @@ const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'claude-opus-4-5';
 const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_ENABLE_1M_CONTEXT = process.env.DEFAULT_ENABLE_1M_CONTEXT !== '0';
 const CONTEXT_1M_BETA = process.env.CONTEXT_1M_BETA || 'claude-code-20250219,context-1m-2025-08-07,interleaved-thinking-2025-05-14,effort-2025-11-24';
+
+const DEVICE_ID = crypto.randomBytes(32).toString('hex');
+const SESSION_ID = crypto.randomUUID();
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
@@ -160,9 +164,9 @@ async function callMessages({ baseUrl, apiKey, model, prompt, anthropicBeta = ''
     body.output_config = { effort: 'xhigh' };
     body.metadata = {
       user_id: JSON.stringify({
-        device_id: 'a'.repeat(64),
+        device_id: DEVICE_ID,
         account_uuid: '',
-        session_id: '00000000-0000-0000-0000-000000000000',
+        session_id: SESSION_ID,
       }),
     };
     body.system = [
