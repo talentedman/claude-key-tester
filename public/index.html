@@ -1,482 +1,383 @@
 <!doctype html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claude Key Tester</title>
-  <style>
-    :root { color-scheme: dark; }
-    body {
-      margin: 0;
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      background: #0b1020;
-      color: #e5e7eb;
-    }
-    .wrap {
-      max-width: 1080px;
-      margin: 36px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      padding: 18px;
-    }
-    h1 { margin: 0 0 16px; font-size: 22px; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
-    label { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; display: block; }
-    input, textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #374151;
-      background: #0f172a;
-      color: #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-    textarea { min-height: 110px; resize: vertical; }
-    textarea#apiKeys { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; min-height: 140px; }
-    button {
-      margin-top: 6px;
-      border: 0;
-      background: #2563eb;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    button.secondary { background: #374151; }
-    .summary {
-      margin-top: 14px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      background: #0f172a;
-      border: 1px solid #1f2937;
-      display: none;
-    }
-    .summary .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-right: 6px; }
-    .pill-ok { background: #052e16; color: #bbf7d0; border: 1px solid #166534; }
-    .pill-busy { background: #422006; color: #fde68a; border: 1px solid #b45309; }
-    .pill-err { background: #3f0c17; color: #fecdd3; border: 1px solid #9f1239; }
-    .pill-pending { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 13px;
-      display: none;
-    }
-    th, td {
-      text-align: left;
-      padding: 8px 10px;
-      border-bottom: 1px solid #1f2937;
-      vertical-align: top;
-    }
-    th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 12px; }
-    td.key { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 12px; max-width: 180px; word-break: break-all; }
-    td.reply { white-space: pre-wrap; word-break: break-word; max-width: 420px; color: #e2e8f0; }
-    td.reply.empty { color: #64748b; font-style: italic; }
-    td.status { white-space: nowrap; }
-    td.duration { color: #94a3b8; white-space: nowrap; }
-    .hint { color: #94a3b8; font-size: 12px; margin-top: 8px; }
-    .toolbar { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .combo { position: relative; }
-    .combo-panel {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      max-height: 260px;
-      overflow-y: auto;
-      z-index: 50;
-      display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
-    .combo-panel.open { display: block; }
-    .combo-item {
-      padding: 8px 12px;
-      font-size: 13px;
-      font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
-      cursor: pointer;
-      color: #e2e8f0;
-    }
-    .combo-item:hover, .combo-item.active { background: #1e293b; }
-    .combo-empty { padding: 10px 12px; font-size: 12px; color: #64748b; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Claude Key 可用性测试</h1>
-      <div class="grid">
-        <div>
-          <label for="baseUrl">Base URL</label>
-          <input id="baseUrl" placeholder="例如: https://anyrouter.top" value="https://anyrouter.top" />
-        </div>
-        <div>
-          <label for="apiKeys">API Keys（每行一个，支持批量）</label>
-          <textarea id="apiKeys" placeholder="sk-ant-...&#10;sk-xxxxxxxx&#10;sk-yyyyyyyy" autocomplete="off"></textarea>
-        </div>
-        <div class="row2">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnyRouter Key Tester</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        background: #0b1020;
+        color: #e5e7eb;
+      }
+      .wrap { max-width: 1080px; margin: 36px auto; padding: 0 16px; }
+      .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 18px; }
+      h1 { margin: 0 0 6px; font-size: 22px; }
+      .sub { color: #94a3b8; font-size: 13px; margin-bottom: 16px; }
+      .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+      label { font-size: 13px; color: #cbd5e1; margin-bottom: 4px; display: block; }
+      input, textarea {
+        width: 100%; box-sizing: border-box;
+        border: 1px solid #374151; background: #0f172a; color: #e2e8f0;
+        border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      textarea#apiKeys { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; min-height: 140px; }
+      button {
+        margin-top: 6px; border: 0; background: #2563eb; color: #fff;
+        padding: 10px 14px; border-radius: 8px; font-size: 14px; cursor: pointer;
+      }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      button.secondary { background: #374151; }
+      .summary {
+        margin-top: 14px; padding: 10px 12px; border-radius: 8px; font-size: 14px;
+        background: #0f172a; border: 1px solid #1f2937; display: none;
+      }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-right: 6px; }
+      .pill-ok { background: #052e16; color: #bbf7d0; border: 1px solid #166534; }
+      .pill-busy { background: #422006; color: #fde68a; border: 1px solid #b45309; }
+      .pill-err { background: #3f0c17; color: #fecdd3; border: 1px solid #9f1239; }
+      .pill-pending { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; display: none; }
+      th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #1f2937; vertical-align: top; }
+      th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 12px; }
+      td.key { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 12px; max-width: 180px; word-break: break-all; }
+      td.reply { white-space: pre-wrap; word-break: break-word; max-width: 420px; color: #e2e8f0; }
+      td.reply.empty { color: #64748b; font-style: italic; }
+      td.status { white-space: nowrap; }
+      td.duration { color: #94a3b8; white-space: nowrap; }
+      .hint { color: #94a3b8; font-size: 12px; margin-top: 8px; }
+      .toolbar { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .combo { position: relative; }
+      .combo-panel {
+        position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+        background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+        max-height: 260px; overflow-y: auto; z-index: 50; display: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      }
+      .combo-panel.open { display: block; }
+      .combo-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: #e2e8f0; font-family: ui-monospace,SFMono-Regular,Menlo,monospace; }
+      .combo-item:hover, .combo-item.active { background: #1e293b; }
+      .combo-empty { padding: 10px 12px; font-size: 12px; color: #64748b; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>AnyRouter Key 可用性测试</h1>
+        <div class="sub">服务端代理：请求通过 Node 后端转发，模拟完整 Claude Code 指纹</div>
+        <div class="grid">
           <div>
-            <label for="model">Model（聚焦自动拉取可用列表）</label>
-            <div class="combo">
-              <input id="model" placeholder="默认 claude-opus-4-7" value="claude-opus-4-7" autocomplete="off" />
-              <div id="modelPanel" class="combo-panel"></div>
+            <label for="baseUrl">Base URL</label>
+            <input id="baseUrl" placeholder="例如: https://anyrouter.top" value="https://anyrouter.top" />
+          </div>
+          <div>
+            <label for="apiKeys">API Keys（每行一个，支持批量；# 开头视为注释）</label>
+            <textarea id="apiKeys" placeholder="sk-ant-...&#10;sk-xxxxxxxx" autocomplete="off"></textarea>
+          </div>
+          <div class="row2">
+            <div>
+              <label for="model">Model（聚焦自动拉取可用列表）</label>
+              <div class="combo">
+                <input id="model" placeholder="默认 claude-opus-4-7" value="claude-opus-4-7" autocomplete="off" />
+                <div id="modelPanel" class="combo-panel"></div>
+              </div>
+              <div id="modelHint" class="hint" style="margin-top:4px"></div>
             </div>
-            <div id="modelHint" class="hint" style="margin-top:4px"></div>
+            <div>
+              <label for="concurrency">并发数</label>
+              <input id="concurrency" type="number" min="1" max="20" value="5" />
+            </div>
           </div>
           <div>
-            <label for="concurrency">并发数</label>
-            <input id="concurrency" type="number" min="1" max="20" value="5" />
+            <label for="prompt">测试文案</label>
+            <textarea id="prompt" placeholder="输入你想测试的文本">你是什么模型</textarea>
           </div>
         </div>
-        <div>
-          <label for="enable1m">
-            <input id="enable1m" type="checkbox" checked style="width:auto; margin-right:8px; vertical-align:middle;" />
-            启用 1m 上下文 + Claude Code 指纹
-          </label>
+
+        <div class="toolbar">
+          <button id="runBtn">开始测试</button>
+          <button id="copyOkBtn" class="secondary" style="display:none">复制可用 Key</button>
+          <button id="exportBtn" class="secondary" style="display:none">导出结果 JSON</button>
         </div>
-        <div>
-          <label for="prompt">测试文案</label>
-          <textarea id="prompt" placeholder="输入你想测试的文本">你是什么模型</textarea>
+
+        <div id="summary" class="summary"></div>
+        <table id="results">
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Key</th>
+              <th style="width:120px">状态</th>
+              <th>回复</th>
+              <th style="width:70px">耗时</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+
+        <div class="hint">
+          请求由服务端代理发出，<code>POST /v1/messages?beta=true</code>，附带完整 Claude Code 指纹和
+          1M 上下文。Key 通过 localStorage 持久化，刷新后自动恢复。
         </div>
       </div>
-
-      <div class="toolbar">
-        <button id="runBtn">开始测试</button>
-        <button id="copyOkBtn" class="secondary" style="display:none">复制可用 Key</button>
-        <button id="exportBtn" class="secondary" style="display:none">导出结果 JSON</button>
-      </div>
-
-      <div id="summary" class="summary"></div>
-      <table id="results">
-        <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th>Key</th>
-            <th style="width:120px">状态</th>
-            <th>回复</th>
-            <th style="width:70px">耗时</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody"></tbody>
-      </table>
-
-      <div class="hint">调用方式按 Claude Messages API：POST /v1/messages?beta=true（带完整 Claude Code 指纹）</div>
     </div>
-  </div>
 
-  <script>
-    const els = {
-      baseUrl: document.getElementById('baseUrl'),
-      apiKeys: document.getElementById('apiKeys'),
-      model: document.getElementById('model'),
-      modelPanel: document.getElementById('modelPanel'),
-      modelHint: document.getElementById('modelHint'),
-      concurrency: document.getElementById('concurrency'),
-      enable1m: document.getElementById('enable1m'),
-      prompt: document.getElementById('prompt'),
-      runBtn: document.getElementById('runBtn'),
-      copyOkBtn: document.getElementById('copyOkBtn'),
-      exportBtn: document.getElementById('exportBtn'),
-      summary: document.getElementById('summary'),
-      table: document.getElementById('results'),
-      tbody: document.getElementById('resultsBody'),
-    };
+    <script>
+      const els = {
+        baseUrl: document.getElementById('baseUrl'),
+        apiKeys: document.getElementById('apiKeys'),
+        model: document.getElementById('model'),
+        modelPanel: document.getElementById('modelPanel'),
+        modelHint: document.getElementById('modelHint'),
+        concurrency: document.getElementById('concurrency'),
+        prompt: document.getElementById('prompt'),
+        runBtn: document.getElementById('runBtn'),
+        copyOkBtn: document.getElementById('copyOkBtn'),
+        exportBtn: document.getElementById('exportBtn'),
+        summary: document.getElementById('summary'),
+        table: document.getElementById('results'),
+        tbody: document.getElementById('resultsBody'),
+      };
 
-    let lastResults = [];
+      let lastResults = [];
 
-    function maskKey(k) {
-      if (!k) return '';
-      if (k.length <= 14) return k;
-      return `${k.slice(0, 8)}…${k.slice(-6)}`;
-    }
-
-    function parseKeys(text) {
-      return text
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'));
-    }
-
-    function pillFor(result) {
-      if (result.pending) return '<span class="pill pill-pending">⏳ 测试中</span>';
-      if (result.error)   return `<span class="pill pill-err">✗ 网络错误</span>`;
-      const data = result.data || {};
-      if (data.success) return '<span class="pill pill-ok">✓ 可用</span>';
-      if (data.upstreamBusy) return `<span class="pill pill-busy">⚠ 上游忙 (${data.response?.status || '5xx'})</span>`;
-      return `<span class="pill pill-err">✗ 不可用 (${data.response?.status || '?'})</span>`;
-    }
-
-    function renderRow(idx, result) {
-      const tr = document.createElement('tr');
-      tr.dataset.idx = idx;
-      const data = result.data || {};
-      const reply = data.response?.replyText || '';
-      const duration = data.durationMs != null ? `${data.durationMs}ms` : '';
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td class="key" title="${result.key.replace(/"/g, '&quot;')}">${maskKey(result.key)}</td>
-        <td class="status">${pillFor(result)}</td>
-        <td class="reply ${reply ? '' : 'empty'}">${reply ? escapeHtml(reply) : (result.error ? escapeHtml(result.error) : (data.message || '—'))}</td>
-        <td class="duration">${duration}</td>
-      `;
-      return tr;
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
-
-    function updateRow(idx) {
-      const tr = els.tbody.querySelector(`tr[data-idx="${idx}"]`);
-      if (!tr) return;
-      const fresh = renderRow(idx, lastResults[idx]);
-      tr.replaceWith(fresh);
-    }
-
-    function updateSummary() {
-      const total = lastResults.length;
-      const ok = lastResults.filter((r) => r.data?.success).length;
-      const busy = lastResults.filter((r) => r.data?.upstreamBusy && !r.data?.success).length;
-      const fail = lastResults.filter((r) => !r.pending && !r.data?.success && !r.data?.upstreamBusy).length;
-      const pending = lastResults.filter((r) => r.pending).length;
-      els.summary.style.display = 'block';
-      els.summary.innerHTML = `
-        共 ${total} 个 Key：
-        <span class="pill pill-ok">✓ 可用 ${ok}</span>
-        <span class="pill pill-busy">⚠ 上游忙 ${busy}</span>
-        <span class="pill pill-err">✗ 不可用 ${fail}</span>
-        ${pending ? `<span class="pill pill-pending">⏳ 进行中 ${pending}</span>` : ''}
-      `;
-      const anyOk = ok + busy > 0;
-      els.copyOkBtn.style.display = anyOk && pending === 0 ? '' : 'none';
-      els.exportBtn.style.display = total > 0 && pending === 0 ? '' : 'none';
-    }
-
-    async function testOne(payload) {
-      const res = await fetch('/api/test', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      return res.json();
-    }
-
-    async function runPool(tasks, concurrency) {
-      const queue = tasks.slice();
-      const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
-        while (queue.length) {
-          const task = queue.shift();
-          if (!task) break;
-          await task();
-        }
-      });
-      await Promise.all(workers);
-    }
-
-    async function runAll() {
-      const baseUrl = els.baseUrl.value.trim();
-      const keys = parseKeys(els.apiKeys.value);
-      const prompt = els.prompt.value;
-      const model = els.model.value.trim();
-      const enable1m = !!els.enable1m.checked;
-      const concurrency = Math.max(1, Math.min(20, parseInt(els.concurrency.value, 10) || 5));
-
-      if (!baseUrl || !prompt.trim() || keys.length === 0) {
-        alert('请完整填写 baseUrl / 至少一个 API Key / 测试文案');
-        return;
+      function maskKey(k) {
+        if (!k) return '';
+        if (k.length <= 14) return k;
+        return `${k.slice(0, 8)}…${k.slice(-6)}`;
       }
 
-      els.runBtn.disabled = true;
-      els.runBtn.textContent = `测试中 (0/${keys.length})...`;
-      els.copyOkBtn.style.display = 'none';
-      els.exportBtn.style.display = 'none';
-
-      lastResults = keys.map((k) => ({ key: k, pending: true }));
-      els.tbody.innerHTML = '';
-      lastResults.forEach((r, i) => els.tbody.appendChild(renderRow(i, r)));
-      els.table.style.display = 'table';
-      updateSummary();
-
-      let done = 0;
-      const tasks = keys.map((key, idx) => async () => {
-        try {
-          const data = await testOne({ baseUrl, apiKey: key, model, enable1m, prompt });
-          lastResults[idx] = { key, data };
-        } catch (err) {
-          lastResults[idx] = { key, error: err?.message || String(err) };
-        }
-        done += 1;
-        els.runBtn.textContent = `测试中 (${done}/${keys.length})...`;
-        updateRow(idx);
-        updateSummary();
-      });
-
-      await runPool(tasks, concurrency);
-
-      els.runBtn.disabled = false;
-      els.runBtn.textContent = '开始测试';
-      updateSummary();
-    }
-
-    function copyOkKeys() {
-      const okKeys = lastResults
-        .filter((r) => r.data?.success || r.data?.upstreamBusy)
-        .map((r) => r.key);
-      if (!okKeys.length) return;
-      navigator.clipboard.writeText(okKeys.join('\n')).then(() => {
-        const orig = els.copyOkBtn.textContent;
-        els.copyOkBtn.textContent = `已复制 ${okKeys.length} 个`;
-        setTimeout(() => { els.copyOkBtn.textContent = orig; }, 1500);
-      });
-    }
-
-    function exportResults() {
-      const blob = new Blob([JSON.stringify(lastResults, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `claude-key-test-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    els.runBtn.addEventListener('click', runAll);
-    els.copyOkBtn.addEventListener('click', copyOkKeys);
-    els.exportBtn.addEventListener('click', exportResults);
-    els.prompt.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runAll();
-    });
-
-    const modelCache = new Map();
-    let modelInflight = null;
-    let modelIds = [];
-    let activeIdx = -1;
-
-    function setModelHint(text, isErr = false) {
-      els.modelHint.textContent = text;
-      els.modelHint.style.color = isErr ? '#fca5a5' : '#94a3b8';
-    }
-
-    function renderModelPanel() {
-      els.modelPanel.innerHTML = '';
-      if (!modelIds.length) {
-        const empty = document.createElement('div');
-        empty.className = 'combo-empty';
-        empty.textContent = '聚焦输入框自动加载';
-        els.modelPanel.appendChild(empty);
-        return;
+      function parseKeys(text) {
+        return text.split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#'));
       }
-      modelIds.forEach((id, i) => {
-        const item = document.createElement('div');
-        item.className = 'combo-item' + (i === activeIdx ? ' active' : '');
-        item.textContent = id;
-        item.addEventListener('mousedown', (e) => {
-          e.preventDefault();
-          els.model.value = id;
-          closeModelPanel();
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      function pillFor(result) {
+        if (result.pending) return '<span class="pill pill-pending">⏳ 测试中</span>';
+        if (result.error) return '<span class="pill pill-err">✗ 网络错误</span>';
+        const data = result.data || {};
+        if (data.success) return '<span class="pill pill-ok">✓ 可用</span>';
+        if (data.upstreamBusy) return `<span class="pill pill-busy">⚠ 上游忙 (${data.response?.status || '5xx'})</span>`;
+        return `<span class="pill pill-err">✗ 不可用 (${data.response?.status || '?'})</span>`;
+      }
+
+      function renderRow(idx, result) {
+        const tr = document.createElement('tr');
+        tr.dataset.idx = idx;
+        const data = result.data || {};
+        const reply = data.response?.replyText || '';
+        const duration = data.durationMs != null ? `${data.durationMs}ms` : '';
+        tr.innerHTML =
+          `<td>${idx + 1}</td>` +
+          `<td class="key" title="${escapeHtml(result.key)}">${escapeHtml(maskKey(result.key))}</td>` +
+          `<td class="status">${pillFor(result)}</td>` +
+          `<td class="reply ${reply ? '' : 'empty'}">${reply ? escapeHtml(reply) : (result.error ? escapeHtml(result.error) : (data.message || '—'))}</td>` +
+          `<td class="duration">${duration}</td>`;
+        return tr;
+      }
+
+      function updateRow(idx) {
+        const tr = els.tbody.querySelector(`tr[data-idx="${idx}"]`);
+        if (!tr) return;
+        tr.replaceWith(renderRow(idx, lastResults[idx]));
+      }
+
+      function updateSummary() {
+        const total = lastResults.length;
+        const ok = lastResults.filter(r => r.data?.success).length;
+        const busy = lastResults.filter(r => r.data?.upstreamBusy && !r.data?.success).length;
+        const fail = lastResults.filter(r => !r.pending && !r.data?.success && !r.data?.upstreamBusy).length;
+        const pending = lastResults.filter(r => r.pending).length;
+        els.summary.style.display = 'block';
+        els.summary.innerHTML =
+          `共 ${total} 个 Key：` +
+          `<span class="pill pill-ok">✓ 可用 ${ok}</span>` +
+          `<span class="pill pill-busy">⚠ 上游忙 ${busy}</span>` +
+          `<span class="pill pill-err">✗ 不可用 ${fail}</span>` +
+          (pending ? `<span class="pill pill-pending">⏳ 进行中 ${pending}</span>` : '');
+        const anyOk = ok + busy > 0;
+        els.copyOkBtn.style.display = anyOk && pending === 0 ? '' : 'none';
+        els.exportBtn.style.display = total > 0 && pending === 0 ? '' : 'none';
+      }
+
+      async function testOne(payload) {
+        const res = await fetch('/api/test', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
         });
-        els.modelPanel.appendChild(item);
-      });
-    }
-
-    function openModelPanel() {
-      activeIdx = -1;
-      renderModelPanel();
-      els.modelPanel.classList.add('open');
-    }
-
-    function closeModelPanel() {
-      els.modelPanel.classList.remove('open');
-    }
-
-    async function loadModels({ force = false } = {}) {
-      const baseUrl = els.baseUrl.value.trim();
-      const firstKey = parseKeys(els.apiKeys.value)[0];
-      if (!baseUrl || !firstKey) {
-        setModelHint('请先填 Base URL 和至少一个 API Key', true);
-        return;
+        return res.json();
       }
-      const cacheKey = `${baseUrl}::${firstKey}`;
-      if (!force && modelCache.has(cacheKey)) {
-        modelIds = modelCache.get(cacheKey);
-        setModelHint(`已加载 ${modelIds.length} 个模型（缓存）`);
-        renderModelPanel();
-        return;
+
+      async function runPool(tasks, concurrency) {
+        const queue = tasks.slice();
+        const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+          while (queue.length) { const t = queue.shift(); if (!t) break; await t(); }
+        });
+        await Promise.all(workers);
       }
-      if (modelInflight) return;
-      setModelHint('拉取可用模型中…');
-      modelInflight = (async () => {
-        try {
-          const res = await fetch('/api/models', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ baseUrl, apiKey: firstKey }),
-          });
-          const data = await res.json();
-          if (data.success && Array.isArray(data.modelIds) && data.modelIds.length) {
-            modelIds = data.modelIds;
-            modelCache.set(cacheKey, modelIds);
-            setModelHint(`已加载 ${modelIds.length} 个模型`);
-            renderModelPanel();
-          } else {
-            setModelHint(`拉取失败：${data.message || '未知错误'}`, true);
-          }
-        } catch (err) {
-          setModelHint(`请求异常：${err?.message || err}`, true);
-        } finally {
-          modelInflight = null;
+
+      async function runAll() {
+        const baseUrl = els.baseUrl.value.trim();
+        const keys = parseKeys(els.apiKeys.value);
+        try { localStorage.setItem(LS_KEY, els.apiKeys.value); } catch {}
+        const prompt = els.prompt.value;
+        const model = els.model.value.trim() || 'claude-opus-4-7';
+        const concurrency = Math.max(1, Math.min(20, parseInt(els.concurrency.value, 10) || 5));
+
+        if (!baseUrl || !prompt.trim() || keys.length === 0) {
+          alert('请完整填写 baseUrl / 至少一个 API Key / 测试文案');
+          return;
         }
-      })();
-    }
 
-    els.model.addEventListener('focus', () => {
-      openModelPanel();
-      loadModels();
-    });
-    els.model.addEventListener('input', () => {
-      activeIdx = -1;
-      renderModelPanel();
-      els.modelPanel.classList.add('open');
-    });
-    els.model.addEventListener('blur', () => setTimeout(closeModelPanel, 120));
-    els.model.addEventListener('keydown', (e) => {
-      const items = els.modelPanel.querySelectorAll('.combo-item');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        activeIdx = Math.min(items.length - 1, activeIdx + 1);
-        renderModelPanel();
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        activeIdx = Math.max(0, activeIdx - 1);
-        renderModelPanel();
-      } else if (e.key === 'Enter' && activeIdx >= 0 && items[activeIdx]) {
-        e.preventDefault();
-        els.model.value = items[activeIdx].textContent;
-        closeModelPanel();
-      } else if (e.key === 'Escape') {
-        closeModelPanel();
+        els.runBtn.disabled = true;
+        els.runBtn.textContent = `测试中 (0/${keys.length})...`;
+        els.copyOkBtn.style.display = 'none';
+        els.exportBtn.style.display = 'none';
+
+        lastResults = keys.map(k => ({ key: k, pending: true }));
+        els.tbody.innerHTML = '';
+        lastResults.forEach((r, i) => els.tbody.appendChild(renderRow(i, r)));
+        els.table.style.display = 'table';
+        updateSummary();
+
+        let done = 0;
+        const tasks = keys.map((key, idx) => async () => {
+          try {
+            const data = await testOne({ baseUrl, apiKey: key, model, prompt });
+            lastResults[idx] = { key, data };
+          } catch (err) {
+            lastResults[idx] = { key, error: err?.message || String(err) };
+          }
+          done += 1;
+          els.runBtn.textContent = `测试中 (${done}/${keys.length})...`;
+          updateRow(idx);
+          updateSummary();
+        });
+
+        await runPool(tasks, concurrency);
+
+        els.runBtn.disabled = false;
+        els.runBtn.textContent = '开始测试';
+        updateSummary();
       }
-    });
-    els.baseUrl.addEventListener('change', () => { modelIds = []; setModelHint(''); });
-    els.apiKeys.addEventListener('change', () => { modelIds = []; setModelHint(''); });
-  </script>
-</body>
+
+      function copyOkKeys() {
+        const okKeys = lastResults.filter(r => r.data?.success || r.data?.upstreamBusy).map(r => r.key);
+        if (!okKeys.length) return;
+        navigator.clipboard.writeText(okKeys.join('\n')).then(() => {
+          const orig = els.copyOkBtn.textContent;
+          els.copyOkBtn.textContent = `已复制 ${okKeys.length} 个`;
+          setTimeout(() => { els.copyOkBtn.textContent = orig; }, 1500);
+        });
+      }
+
+      function exportResults() {
+        const blob = new Blob([JSON.stringify(lastResults, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `claude-key-test-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      els.runBtn.addEventListener('click', runAll);
+      els.copyOkBtn.addEventListener('click', copyOkKeys);
+      els.exportBtn.addEventListener('click', exportResults);
+      els.prompt.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runAll(); });
+
+      // ========== 模型下拉 ==========
+      const modelCache = new Map();
+      let modelInflight = null, modelIds = [], activeIdx = -1;
+
+      function setModelHint(text, isErr) {
+        els.modelHint.textContent = text;
+        els.modelHint.style.color = isErr ? '#fca5a5' : '#94a3b8';
+      }
+
+      function renderModelPanel() {
+        els.modelPanel.innerHTML = '';
+        if (!modelIds.length) {
+          const empty = document.createElement('div');
+          empty.className = 'combo-empty';
+          empty.textContent = '聚焦输入框自动加载';
+          els.modelPanel.appendChild(empty);
+          return;
+        }
+        modelIds.forEach((id, i) => {
+          const item = document.createElement('div');
+          item.className = 'combo-item' + (i === activeIdx ? ' active' : '');
+          item.textContent = id;
+          item.addEventListener('mousedown', e => { e.preventDefault(); els.model.value = id; closeModelPanel(); });
+          els.modelPanel.appendChild(item);
+        });
+      }
+
+      function openModelPanel() { activeIdx = -1; renderModelPanel(); els.modelPanel.classList.add('open'); }
+      function closeModelPanel() { els.modelPanel.classList.remove('open'); }
+
+      async function loadModels({ force } = {}) {
+        const baseUrl = els.baseUrl.value.trim();
+        const firstKey = parseKeys(els.apiKeys.value)[0];
+        if (!baseUrl || !firstKey) { setModelHint('请先填 Base URL 和至少一个 API Key', true); return; }
+        const cacheKey = `${baseUrl}::${firstKey}`;
+        if (!force && modelCache.has(cacheKey)) {
+          modelIds = modelCache.get(cacheKey);
+          setModelHint(`已加载 ${modelIds.length} 个模型（缓存）`);
+          renderModelPanel();
+          return;
+        }
+        if (modelInflight) return;
+        setModelHint('拉取可用模型中…');
+        modelInflight = (async () => {
+          try {
+            const res = await fetch('/api/models', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ baseUrl, apiKey: firstKey }),
+            });
+            const data = await res.json();
+            if (data.success && Array.isArray(data.modelIds) && data.modelIds.length) {
+              modelIds = data.modelIds;
+              modelCache.set(cacheKey, modelIds);
+              setModelHint(`已加载 ${modelIds.length} 个模型`);
+              renderModelPanel();
+            } else {
+              setModelHint(`拉取失败：${data.message || '未知错误'}`, true);
+            }
+          } catch (err) {
+            setModelHint(`请求异常：${err?.message || err}`, true);
+          } finally {
+            modelInflight = null;
+          }
+        })();
+      }
+
+      els.model.addEventListener('focus', () => { openModelPanel(); loadModels(); });
+      els.model.addEventListener('input', () => { activeIdx = -1; renderModelPanel(); els.modelPanel.classList.add('open'); });
+      els.model.addEventListener('blur', () => setTimeout(closeModelPanel, 120));
+      els.model.addEventListener('keydown', e => {
+        const items = els.modelPanel.querySelectorAll('.combo-item');
+        if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(items.length - 1, activeIdx + 1); renderModelPanel(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(0, activeIdx - 1); renderModelPanel(); }
+        else if (e.key === 'Enter' && activeIdx >= 0 && items[activeIdx]) { e.preventDefault(); els.model.value = items[activeIdx].textContent; closeModelPanel(); }
+        else if (e.key === 'Escape') { closeModelPanel(); }
+      });
+      els.baseUrl.addEventListener('change', () => { modelIds = []; setModelHint(''); });
+      els.apiKeys.addEventListener('change', () => { modelIds = []; setModelHint(''); });
+
+      // ========== localStorage 持久化 ==========
+      const LS_KEY = 'claude_key_tester_api_keys';
+      (function restoreApiKeys() {
+        try { const saved = localStorage.getItem(LS_KEY); if (saved) els.apiKeys.value = saved; } catch {}
+      })();
+    </script>
+  </body>
 </html>
